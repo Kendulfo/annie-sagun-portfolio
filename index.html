@@ -137,15 +137,19 @@ html.js .pre{position:fixed;inset:0;z-index:100;background:var(--ink);display:gr
    STATEMENT — paper chapter, scrubbed word reveal
    ===================================================================== */
 .statement{background:var(--paper);color:var(--ink);padding-block:clamp(120px,16vw,240px);position:relative;overflow:hidden}
-.st-grid{display:grid;grid-template-columns:minmax(0,1fr) clamp(140px,22vw,340px);gap:clamp(24px,5vw,90px);align-items:end}
+.st-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:clamp(24px,5vw,90px);align-items:stretch}
 .st-text{margin:0;font-weight:400;font-size:clamp(1.85rem,3.9vw,4.4rem);line-height:1.12;letter-spacing:-.03em}
 .st-text .w{display:inline-block;white-space:pre}
 .st-text b{font-weight:700}
-.st-photo{position:relative}
-.st-photo img{width:100%;filter:drop-shadow(-20px 28px 40px rgba(13,9,10,.28))}
+/* photo is as tall as the paragraph beside it; absolute so it never stretches the row itself */
+.st-photo{position:relative;min-height:420px}
+.st-photo::before{content:"";position:absolute;inset:auto 6% 0;height:70%;z-index:-1;filter:blur(10px);
+  background:radial-gradient(60% 100% at 50% 100%,rgba(220,170,139,.45),transparent 70%)}
+.st-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;
+  filter:drop-shadow(-20px 28px 40px rgba(13,9,10,.28))}
 .st-foot{display:flex;gap:clamp(16px,3vw,48px);flex-wrap:wrap;margin-top:clamp(48px,6vw,90px);color:var(--i70)}
 .st-foot span::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--rec);margin-right:10px;vertical-align:middle}
-@media(max-width:760px){.st-grid{grid-template-columns:1fr}.st-photo{width:58%;margin-left:auto}}
+@media(max-width:760px){.st-grid{grid-template-columns:1fr}.st-photo{min-height:0;aspect-ratio:3/4;width:72%;margin:0 auto}}
 
 /* =====================================================================
    CRAFT — gapless bento
@@ -157,7 +161,8 @@ html.js .pre{position:fixed;inset:0;z-index:100;background:var(--ink);display:gr
 .sec-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;margin-bottom:clamp(40px,5vw,80px)}
 .sec-head p{max-width:34ch;margin:0;color:var(--b70);font-size:clamp(17px,1.25vw,21px)}
 .bento{display:grid;gap:clamp(10px,1vw,16px);grid-auto-flow:dense;
-  grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:minmax(280px,auto)}
+  grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:auto}
+.bx-b,.bx-c,.bx-d{min-height:280px}
 .bx{position:relative;overflow:hidden;border-radius:clamp(18px,1.6vw,28px);background:var(--plum-2);
   padding:clamp(22px,2.2vw,36px);display:flex;flex-direction:column;justify-content:flex-end;isolation:isolate;
   border:1px solid var(--b12)}
@@ -184,10 +189,10 @@ html.js .pre{position:fixed;inset:0;z-index:100;background:var(--ink);display:gr
 .bx-d .mono{color:var(--i45)}
 .stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:1px;background:var(--b12);border:1px solid var(--b12);
   border-radius:clamp(18px,1.6vw,28px);overflow:hidden;height:100%}
-.stat{background:var(--plum);padding:clamp(20px,2vw,32px);display:flex;flex-direction:column;justify-content:space-between;gap:24px}
+.stat{background:var(--plum);padding:clamp(20px,2vw,32px);display:flex;flex-direction:column;gap:12px}
 .stat b{font-weight:700;font-size:clamp(2.4rem,4vw,4.4rem);line-height:.9;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
 .stat b small{font-size:.38em;font-weight:400;color:var(--b50);letter-spacing:0}
-.stat span{color:var(--b50)}
+.stat span.mono{color:var(--b70);font-family:var(--f);font-size:clamp(15px,1.05vw,18px);letter-spacing:0;text-transform:none;line-height:1.35}
 @media(max-width:1100px){
   .bento{grid-template-columns:repeat(2,minmax(0,1fr))}
   .bx-e{grid-column:span 2}
@@ -289,7 +294,8 @@ html.js .pre{position:fixed;inset:0;z-index:100;background:var(--ink);display:gr
 /* =====================================================================
    FRAMES — parallax columns
    ===================================================================== */
-.frames{padding-block:clamp(120px,14vw,220px);background:var(--ink);overflow:hidden}
+.frames{padding-block:clamp(120px,14vw,220px);background:var(--ink);overflow:hidden;position:relative;z-index:0}
+.frames .sec-head{position:relative;z-index:2}
 .gal{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(10px,1.2vw,20px);align-items:start}
 .gcol{display:flex;flex-direction:column;gap:clamp(10px,1.2vw,20px)}
 .gcol:nth-child(2){margin-top:clamp(40px,12vw,220px)}
@@ -686,6 +692,13 @@ var REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
 var HAS_GSAP = !!(window.gsap && window.ScrollTrigger);
 document.documentElement.classList.add('js');
 
+/* always open at the hero: no restored scroll position, no jump to a #section */
+if('scrollRestoration' in history) history.scrollRestoration = 'manual';
+if(location.hash) history.replaceState(null, '', location.pathname + location.search);
+scrollTo(0, 0);
+/* fallback for browsers that ignore scrollRestoration: leave at the top, so there is nothing to restore */
+addEventListener('beforeunload', function(){ scrollTo(0, 0); });
+
 /* ---------------- DATA (same content as the live site) ---------------- */
 var P = [
  {id:'sapulso', t:'1621 — Sapulso EP', sub:'The Playroom · Artist Notes · Don’t Pop the Balloon', cat:['camera'], cover:'pj-1621-playroom',
@@ -1075,9 +1088,10 @@ mm.add('(prefers-reduced-motion: no-preference)', function(){
 
   /* gallery: columns move at different speeds */
   mm.add('(min-width: 701px)', function(){
-    var speeds = [-12, 10, -20];
+    /* columns start lower and settle at their natural spot, never above it, so they can't ride over the heading */
+    var drop = [180, 60, 300];
     $$('.gcol').forEach(function(c,i){
-      gsap.fromTo(c, {yPercent:0}, {yPercent:speeds[i], ease:'none', scrollTrigger:{trigger:'.frames', start:'top bottom', end:'bottom top', scrub:true}});
+      gsap.fromTo(c, {y:drop[i]}, {y:0, ease:'none', scrollTrigger:{trigger:'.gal', start:'top bottom', end:'bottom bottom', scrub:true}});
     });
   });
   $$('.gal figure').forEach(function(f){
@@ -1095,7 +1109,11 @@ mm.add('(prefers-reduced-motion: no-preference)', function(){
   return function(){ if(lenis){ lenis.destroy(); lenis = null; } };
 });
 
-addEventListener('load', function(){ ScrollTrigger.refresh(); });
+addEventListener('load', function(){
+  ScrollTrigger.refresh();
+  /* late-loading images can shift layout; snap back to the top once everything is in */
+  if(lenis) lenis.scrollTo(0, {immediate:true}); else scrollTo(0, 0);
+});
 })();
 </script>
 </body>
